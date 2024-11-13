@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tab Sorter</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+</head>
+<body>
+  <div id="settings-container">
+    <div class="legend">
+      Last viewed:
+      <span><div class="color-box color-recent"></div>0-3 days ago</span>
+      <span><div class="color-box color-stale"></div>>3 days ago</span>
+      <span><div class="color-box color-old"></div>>7 days ago</span>
+    </div>
+    <button id="theme-toggle" class="fas fa-adjust" title="Switch theme"></button>
+  </div>
+  <div id="search-container">
+    <input type="text" id="search-input" placeholder="Search titles...">
+    <i id="clear-search" class="fas fa-xmark" title="Clear input"></i>
+    <div id="reset-filters">Reset all filters</div>
+  </div>
+  <div id="icon-container">
+    <i id="collapse" class="fa-solid fa-angles-up" title="Collapse all"></i>
+    <i id="expand" class="fa-solid fa-angles-down" title="Expand all"></i>
+  </div>
+  <div id="window-container"></div>
+  <script src="main.js"></script>
+</body>
+</html>

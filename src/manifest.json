@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "TabSorter",
+  "version": "1.0",
+  "description": "A browser extension to organize and manage tabs with tree view and grouping",
+  "permissions": [
+    "tabs",
+    "storage",
+    "sessions",
+    "system.display",
+    "activeTab",
+    "tabGroups"
+  ],
+  "incognito": "split",
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "host_permissions": [
+    "http://*/",
+    "https://*/"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "commands": {
+    "open_extension_window": {
+      "suggested_key": {
+        "default": "Ctrl+B",
+        "mac": "Command+B"
+      },
+      "description": "Open or focus the extension window"
+    }
+  }
+}
