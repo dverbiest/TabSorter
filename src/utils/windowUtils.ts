@@ -114,14 +114,12 @@ function createWindowDiv(window: chrome.windows.Window): HTMLDivElement {
   const arrowSpan = document.createElement('span');
   arrowSpan.classList.add('fas', 'fa-chevron-down', 'arrow');
 
-  windowTitle.appendChild(titleInput);
-  windowTitle.appendChild(editIcon);
-
   const mergeTarget = document.createElement('div');
   mergeTarget.classList.add('merge-target');
   mergeTarget.textContent = 'Merge';
   windowTitle.appendChild(mergeTarget);
-
+  windowTitle.appendChild(titleInput);
+  windowTitle.appendChild(editIcon);
   windowTitle.appendChild(arrowSpan);
   windowDiv.appendChild(windowTitle);
 

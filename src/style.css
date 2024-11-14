@@ -207,7 +207,7 @@ body.dark-mode .sortable-chosen {
 }
 
 .merge-target {
-  margin: 0;
+  margin-right: 8px;
   padding: 8px 20px;
   border-radius: 4px;
   border: 2px dashed #66b3ff66;
