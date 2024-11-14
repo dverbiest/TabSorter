@@ -404,16 +404,20 @@ body.dark-mode #collapse:hover, body.dark-mode #expand:hover {
   padding: 16px;
   position: fixed;
   z-index: 1;
-  right: 0%;
-  bottom: 30px;
+  right: 0;
   font-size: 17px;
   opacity: 0;
-  transition: opacity 0.3s, visibility 0.3s;
+  transition: opacity 0.3s, visibility 0.3s, bottom 0.3s;
 }
 
 .toast.show {
   visibility: visible;
   opacity: 1;
+}
+
+.toast.fade-out {
+  opacity: 0;
+  bottom: 0;
 }
 
 .editable-title[contenteditable="true"] {

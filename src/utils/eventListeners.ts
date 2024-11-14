@@ -1,5 +1,5 @@
 import { updateWindowLists } from './windowUtils';
-import { restoreLastClosedTab } from './tabUtils';
+import { restoreLastAction } from './tabUtils';
 
 export function initializeEventListeners() {
   chrome.tabs.onCreated.addListener(() => {
@@ -34,30 +34,8 @@ export function initializeEventListeners() {
 
   document.addEventListener('keydown', (event) => {
     if ((event.ctrlKey || event.metaKey) && event.key === 'z') {
-      console.log('Restore last closed tab');
-      restoreLastClosedTab();
+      console.log('Undo last action');
+      restoreLastAction();
     }
   });
-
-  // let lastActivity = Date.now();
-  // let reload = false;
-
-  // function trackActivity() {
-  //   const now = Date.now();
-  //   if (reload) {
-  //     location.reload();
-  //     reload = false;
-  //   }
-  //   lastActivity = now;
-  // }
-
-  // document.addEventListener('mousemove', trackActivity);
-
-  // setInterval(() => {
-  //   const now = Date.now();
-  //   if (now - lastActivity > 3 * 1000) {
-  //     console.log('Pending reload');
-  //     reload = true;
-  //   }
-  // }, 1000);
 }

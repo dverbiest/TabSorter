@@ -1,7 +1,7 @@
 import Sortable from 'sortablejs';
 import nlp from 'compromise';
 import { createElement } from './domUtils';
-import { handleTabClose } from './tabUtils';
+import { closeTab, mergeWindows } from './tabUtils';
 
 export function updateWindowLists() {
   console.log('Updating lists');
@@ -11,10 +11,8 @@ export function updateWindowLists() {
       container.innerHTML = '';
       const sortedWindows = sortWindowsByStoredOrder(windows);
       sortedWindows.forEach((window) => {
-        if (!window.type || window.type !== 'popup') { // Skip creating div for extension windows
-          const windowDiv = createWindowDiv(window);
-          container.appendChild(windowDiv);
-        }
+        if (!window.type || window.type !== 'popup') // Skip extension windows
+          container.appendChild(createWindowDiv(window));
       });
       applyFilters();
       applySearchFilter();
@@ -53,7 +51,7 @@ function createTabListItem(tab: chrome.tabs.Tab, windowId: number): HTMLLIElemen
       () => tab.id && chrome.windows.create({ tabId: tab.id },
         () => { if (tab.pinned) chrome.tabs.update(tab.id!, { pinned: true }) })),
     createElement('button', { className: 'fas fa-xmark' }, '',
-      () => tab.id && handleTabClose(tab.id))
+      () => tab.id && closeTab(tab.id))
   ];
 
   elements.forEach(element => div.appendChild(element));
@@ -344,33 +342,17 @@ function initializeWindowSortable() {
       onEnd: (evt) => {
         const fromElement = evt.item as HTMLElement;
         const toElement = evt.to as HTMLElement;
-        // const icons = document.querySelectorAll('.window-title .fas');
-        // const mergeTargets = document.querySelectorAll('.merge-target');
-        // const collapsed = fromElement.dataset.collapsed === 'true';
-
-        // mergeTargets.forEach(target => target.classList.remove('show'));
-        // icons.forEach(icon => icon.classList.remove('hide'));
 
         if (toElement.classList.contains('merge-target')) {
           const fromWindowId = parseInt(fromElement.dataset.windowId || '', 10);
           const toWindowId = parseInt((toElement.closest('.window') as HTMLElement)?.dataset.windowId || '', 10);
-          
-          chrome.tabs.query({ windowId: fromWindowId }, (tabs) => {
-            tabs.forEach((tab, index) => {
-              chrome.tabs.move(tab.id!, { windowId: toWindowId, index }, () => {
-                if (tab.pinned) chrome.tabs.update(tab.id!, { pinned: true });
-              });
-            });
-          });
+          mergeWindows(fromWindowId, toWindowId);
         }
-
-        // if (!collapsed) {
-        //   fromElement.querySelectorAll('.collapsed').forEach(el => el.classList.remove('collapsed'));
-        // }
 
         if (evt.newIndex !== undefined && evt.oldIndex !== evt.newIndex) {
           saveWindowOrder();
         }
+
         updateWindowLists();
       }
     });
