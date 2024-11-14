@@ -9,7 +9,8 @@
     "sessions",
     "system.display",
     "activeTab",
-    "tabGroups"
+    "tabGroups",
+    "notifications"
   ],
   "incognito": "split",
   "background": {
