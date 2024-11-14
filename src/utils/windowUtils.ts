@@ -102,6 +102,8 @@ function createWindowDiv(window: chrome.windows.Window): HTMLDivElement {
     titleInput.setAttribute('readonly', 'true');
     titleInput.style.cursor = 'pointer';
     titleInput.style.pointerEvents = 'none';
+    if (titleInput.value.trim() === '')
+      titleInput.value = generateSmartTitle(window.tabs || []);
     saveWindowTitle(window.id!, titleInput.value);
   });
 
@@ -160,13 +162,13 @@ function createWindowDiv(window: chrome.windows.Window): HTMLDivElement {
   return windowDiv;
 }
 
-function saveWindowTitle(windowId: number, title: string) {
+export function saveWindowTitle(windowId: number, title: string) {
   const titles = JSON.parse(localStorage.getItem('windowTitles') || '{}');
   titles[windowId] = title;
   localStorage.setItem('windowTitles', JSON.stringify(titles));
 }
 
-function getStoredWindowTitle(windowId: number): string | null {
+export function getStoredWindowTitle(windowId: number): string | null {
   const titles = JSON.parse(localStorage.getItem('windowTitles') || '{}');
   return titles[windowId] || null;
 }
@@ -344,9 +346,11 @@ function initializeWindowSortable() {
         const toElement = evt.to as HTMLElement;
 
         if (toElement.classList.contains('merge-target')) {
+          const titleInput = fromElement.querySelector('.editable-title-input') as HTMLInputElement;
+          const windowTitle = titleInput.value;
           const fromWindowId = parseInt(fromElement.dataset.windowId || '', 10);
           const toWindowId = parseInt((toElement.closest('.window') as HTMLElement)?.dataset.windowId || '', 10);
-          mergeWindows(fromWindowId, toWindowId);
+          mergeWindows(windowTitle, fromWindowId, toWindowId);
         }
 
         if (evt.newIndex !== undefined && evt.oldIndex !== evt.newIndex) {

@@ -1,6 +1,4 @@
 let extensionWindowId: number | undefined;
-let lastActivity = Date.now();
-let reload = false;
 
 function createExtensionWindow() {
   chrome.system.display.getInfo((displays) => {
@@ -43,25 +41,3 @@ chrome.windows.onRemoved.addListener((windowId) => {
   if (windowId === extensionWindowId)
     extensionWindowId = undefined;
 });
-
-chrome.tabs.onCreated.addListener(() => trackActivity);
-chrome.tabs.onRemoved.addListener(() => trackActivity);
-chrome.tabs.onActivated.addListener(() => trackActivity);
-chrome.tabs.onUpdated.addListener(() => trackActivity);
-chrome.windows.onFocusChanged.addListener(() => trackActivity);
-
-function trackActivity() {
-  const now = Date.now();
-  if (reload) {
-    chrome.tabs.query({ windowId: extensionWindowId }, (tabs) => {
-      if (tabs[0].id) chrome.tabs.reload(tabs[0].id);
-    });
-    reload = false;
-  }
-  lastActivity = now;
-}
-
-setInterval(() => {
-  const now = Date.now();
-  if (now - lastActivity > 60 * 1000) reload = true;
-}, 1000);
