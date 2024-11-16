@@ -42,7 +42,7 @@ function createTabListItem(tab: chrome.tabs.Tab, windowId: number): HTMLLIElemen
 
   const div = document.createElement('div');
   const elements = [
-    createElement('button', { className: `fas fa-thumbtack ${tab.pinned ? 'pinned' : ''}` }, '', () => {
+    createElement('button', { className: `fas fa-thumbtack ${tab.pinned ? 'pinned' : ''}`, title: 'Pin tab' }, '', () => {
       if (tab.id !== undefined) chrome.tabs.update(tab.id, { pinned: !tab.pinned }, updateWindowLists);
     }),
     createElement('img', { src: tab.favIconUrl || 'icons/icon128.png' }),
@@ -77,34 +77,48 @@ function createWindowDiv(window: chrome.windows.Window): HTMLDivElement {
   windowTitle.classList.add('window-title');
 
   const editIcon = document.createElement('i');
-  editIcon.classList.add('fas', 'fa-pencil', 'edit-icon');
+  editIcon.classList.add('fas', 'fa-pen-to-square', 'edit-icon');
+  editIcon.title = 'Edit title';
 
   const titleInput = document.createElement('input');
   titleInput.type = 'text';
   titleInput.value = getStoredWindowTitle(window.id!) || generateSmartTitle(window.tabs || []);
   titleInput.classList.add('editable-title-input');
   titleInput.setAttribute('readonly', 'true');
-  titleInput.addEventListener('click', (e) => {
+  titleInput.addEventListener('click', (event) => {
     if (!titleInput.hasAttribute('readonly'))
-      e.stopPropagation();
+      event.stopPropagation();
   });
-  function enableTitleEditing(e: Event) {
-    e.stopPropagation();
+  function enableTitleEditing() {
     titleInput.removeAttribute('readonly');
     titleInput.style.cursor = 'text';
     titleInput.style.pointerEvents = 'auto';
     titleInput.select();
+    document.querySelectorAll('.window').forEach(div => {
+      div.classList.remove('options'); // Close other option-bars
+    });
+    windowDiv.classList.add('options');
   }
-  titleInput.addEventListener('focus', enableTitleEditing);
-  editIcon.addEventListener('click', enableTitleEditing);
-
-  titleInput.addEventListener('blur', () => {
+  function saveAndCloseTitleEdit() {
     titleInput.setAttribute('readonly', 'true');
     titleInput.style.cursor = 'pointer';
     titleInput.style.pointerEvents = 'none';
     if (titleInput.value.trim() === '')
       titleInput.value = generateSmartTitle(window.tabs || []);
     saveWindowTitle(window.id!, titleInput.value);
+  }
+  titleInput.addEventListener('focus', enableTitleEditing);
+  titleInput.addEventListener('blur', saveAndCloseTitleEdit);
+  editIcon.addEventListener('click', (event) => {
+    event.stopPropagation();
+    if (!windowDiv.classList.contains('options')) {
+      enableTitleEditing();
+      windowDiv.classList.add('options');
+    }
+    else {
+      saveAndCloseTitleEdit();
+      windowDiv.classList.remove('options');
+    }
   });
 
   titleInput.addEventListener('input', () => {
@@ -113,14 +127,39 @@ function createWindowDiv(window: chrome.windows.Window): HTMLDivElement {
 
   const arrowSpan = document.createElement('span');
   arrowSpan.classList.add('fas', 'fa-chevron-down', 'arrow');
+  arrowSpan.title = 'Collapse/Expand';
 
   const mergeTarget = document.createElement('div');
   mergeTarget.classList.add('merge-target');
   mergeTarget.textContent = 'Merge';
+
+  const minimizeWindow = document.createElement('button');
+  minimizeWindow.classList.add('fa-solid', 'fa-window-minimize', 'minimize');
+  minimizeWindow.title = 'Minimize window';
+  minimizeWindow.addEventListener('click', () => {
+    // Minimize twice to ensure fullscreen windows are minimized as well
+    chrome.windows.update(window.id!, { state: 'minimized' }, () => 
+      chrome.windows.update(window.id!, { state: 'minimized' }));
+  });
+  const focusWindow = document.createElement('button');
+  focusWindow.classList.add('fa-solid', 'fa-bullseye', 'focus');
+  focusWindow.title = 'Focus window';
+  focusWindow.addEventListener('click', () => chrome.windows.update(window.id!, { focused: true }));
+  const closeWindow = document.createElement('button');
+  closeWindow.classList.add('fa-regular', 'fa-rectangle-xmark', 'close');
+  closeWindow.title = 'Close window';
+  closeWindow.addEventListener('click', () => chrome.windows.remove(window.id!));
+  const windowOptions = document.createElement('div');
+  windowOptions.classList.add('window-options');
+  windowOptions.appendChild(minimizeWindow);
+  windowOptions.appendChild(focusWindow);
+  windowOptions.appendChild(closeWindow);
+
   windowTitle.appendChild(mergeTarget);
   windowTitle.appendChild(titleInput);
   windowTitle.appendChild(editIcon);
   windowTitle.appendChild(arrowSpan);
+  windowDiv.appendChild(windowOptions);
   windowDiv.appendChild(windowTitle);
 
   const tabList = document.createElement('ul');
@@ -193,7 +232,7 @@ function applyCollapseState() {
 }
 
 export function initializeLegendFilters() {
-  document.querySelectorAll('.legend span').forEach(item => {
+  document.querySelectorAll('.legend button').forEach(item => {
     item.addEventListener('click', () => {
       const className = item.querySelector('.color-box')?.classList[1].split('-')[1];
       document.querySelectorAll(`.tab-list li.${className}`).forEach(tab => tab.classList.toggle('filter-hidden'));
@@ -217,7 +256,7 @@ function updateWindowVisibility() {
 
 function saveFilterState() {
   const filterState: { [key: string]: boolean } = {};
-  document.querySelectorAll('.legend span').forEach(item => {
+  document.querySelectorAll('.legend button').forEach(item => {
     const className = item.querySelector('.color-box')?.classList[1].split('-')[1] || '';
     filterState[className] = item.classList.contains('hidden');
   });
@@ -274,7 +313,7 @@ function applySearchFilter() {
 
 function resetFilters() {
   applyCollapseState();
-  document.querySelectorAll('.legend span').forEach(item => {
+  document.querySelectorAll('.legend button').forEach(item => {
     const className = item.querySelector('.color-box')?.classList[1].split('-')[1];
     document.querySelectorAll(`.tab-list li.${className}`).forEach(tab => tab.classList.remove('filter-hidden'));
     item.classList.remove('hidden');
@@ -322,12 +361,13 @@ function initializeWindowSortable() {
       group: 'windows',
       swapThreshold: 0.25,
       onStart: (evt) => {
-        const headerElement = evt.item.firstChild as HTMLElement;
-        const listElement = evt.item.lastChild as HTMLElement;
+        const headerElement = evt.item.querySelector('h3') as HTMLElement;
+        const listElement = evt.item.querySelector('.tab-list') as HTMLElement;
         const icons = document.querySelectorAll('.window-title .fas');
         const mergeTargets = document.querySelectorAll('.merge-target');
         const collapsed = headerElement.classList.contains('collapsed');
 
+        evt.item.classList.remove('options');
         headerElement.classList.add('collapsed');
         listElement.classList.add('collapsed');
         icons.forEach(icon => icon.classList.add('hide'));

@@ -2,12 +2,12 @@
   --gradient-deg: 180deg;
   --gradient-start-percentage: 0%;
   --gradient-end-percentage: 8%;
-  --color-recent: rgb(138, 170, 218);
-  --color-stale: rgb(238, 159, 56);
-  --color-old: rgb(248, 77, 77);
-  --color-recent-dark: rgb(90, 155, 211);
-  --color-stale-dark: rgb(255, 128, 0);
-  --color-old-dark: rgb(232, 59, 59);
+  --lightblue: rgb(121 164 228);
+  --orange: rgb(238 143 56);
+  --red: rgb(248, 77, 77);
+  --lightblue-dark: rgb(60 117 195 / 75%);
+  --orange-dark: rgb(234 127 19 / 75%);
+  --red-dark: rgb(209 33 33 / 75%);
 }
 
 body {
@@ -24,7 +24,6 @@ body.dark-mode {
 
 #settings-container {
   display: flex;
-  justify-content: flex-end;
   padding: 0 4px;
 }
 
@@ -133,6 +132,7 @@ body.dark-mode #reset-filters {
   padding: 0 8px;
   margin: 8px 0;
   cursor: grab;
+  transition: margin 0.3s ease-out;
 }
 
 .window.hidden {
@@ -176,6 +176,58 @@ body.dark-mode .sortable-chosen {
   display: none;
 }
 
+.window.options {
+  margin-top: 30px;
+}
+
+.window.options .window-options {
+  opacity: 1;
+  visibility: visible;
+}
+
+.window-options {
+  position: absolute;
+  width: calc(100% - 16px);
+  text-align: right;
+  transform: translateY(-24px);
+  display: block;
+  transition: opacity 0.3s ease-out;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.window-options button {
+  filter: grayscale(0.1);
+  border: 1px solid;
+  border-bottom: 1px solid #ccc;
+  cursor: pointer;
+  color: #f4f4f9;
+  font-size: 14px;
+  padding: 4px 10px;
+  border-radius: 6px 6px 0px 0px;
+  opacity: 0.75;
+}
+
+body.dark-mode .window-options button {
+  border-bottom: 1px solid #333;
+  color: #1e1e1e;
+}
+
+.window-options button:hover {
+  opacity: 1;
+  filter: none;
+}
+
+.window-options .minimize {
+  background: linear-gradient(var(--orange), var(--orange-dark));
+}
+.window-options .focus {
+  background: linear-gradient(var(--lightblue), var(--lightblue-dark));
+}
+.window-options .close {
+  background: linear-gradient(var(--red), var(--red-dark));
+}
+
 .tab-list {
   list-style-type: none;
   margin-top: 0;
@@ -195,15 +247,15 @@ body.dark-mode .sortable-chosen {
 }
 
 .tab-list li.recent {
-  background: linear-gradient(var(--gradient-deg), var(--color-recent) var(--gradient-start-percentage), rgba(0, 0, 0, 0) var(--gradient-end-percentage));
+  background: linear-gradient(var(--gradient-deg), var(--lightblue) var(--gradient-start-percentage), rgba(0, 0, 0, 0) var(--gradient-end-percentage));
 }
 
 .tab-list li.stale {
-  background: linear-gradient(var(--gradient-deg), var(--color-stale) var(--gradient-start-percentage), rgba(0, 0, 0, 0) var(--gradient-end-percentage));
+  background: linear-gradient(var(--gradient-deg), var(--orange) var(--gradient-start-percentage), rgba(0, 0, 0, 0) var(--gradient-end-percentage));
 }
 
 .tab-list li.old {
-  background: linear-gradient(var(--gradient-deg), var(--color-old) var(--gradient-start-percentage), rgba(0, 0, 0, 0) var(--gradient-end-percentage));
+  background: linear-gradient(var(--gradient-deg), var(--red) var(--gradient-start-percentage), rgba(0, 0, 0, 0) var(--gradient-end-percentage));
 }
 
 .merge-target {
@@ -224,15 +276,15 @@ body.dark-mode .sortable-chosen {
 }
 
 body.dark-mode .tab-list li.recent {
-  background: linear-gradient(var(--gradient-deg), var(--color-recent-dark) var(--gradient-start-percentage), rgba(0, 0, 0, 0) var(--gradient-end-percentage));
+  background: linear-gradient(var(--gradient-deg), var(--lightblue-dark) var(--gradient-start-percentage), rgba(0, 0, 0, 0) var(--gradient-end-percentage));
 }
 
 body.dark-mode .tab-list li.stale {
-  background: linear-gradient(var(--gradient-deg), var(--color-stale-dark) var(--gradient-start-percentage), rgba(0, 0, 0, 0) var(--gradient-end-percentage));
+  background: linear-gradient(var(--gradient-deg), var(--orange-dark) var(--gradient-start-percentage), rgba(0, 0, 0, 0) var(--gradient-end-percentage));
 }
 
 body.dark-mode .tab-list li.old {
-  background: linear-gradient(var(--gradient-deg), var(--color-old-dark) var(--gradient-start-percentage), rgba(0, 0, 0, 0) var(--gradient-end-percentage));
+  background: linear-gradient(var(--gradient-deg), var(--red-dark) var(--gradient-start-percentage), rgba(0, 0, 0, 0) var(--gradient-end-percentage));
 }
 
 body.dark-mode .tab-list li {
@@ -340,34 +392,35 @@ body.dark-mode .tab-age, body.dark-mode .last-viewed {
   user-select: none;
 }
 
-.legend span {
-  display: flex;
-  align-items: center;
+.legend button {
+  background: none;
+  color: inherit;
   cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 4px;
+  border: none;
+  padding: 0 2px;
+  margin: 0 2px;
 }
 
-.legend span.hidden {
+.legend button.hidden {
   opacity: 0.5;
 }
 
 .legend .color-box {
-  width: 12px;
-  height: 12px;
+  width: 100%;
+  height: 2px;
   margin-right: 4px;
 }
 
 .legend .color-recent {
-  background-color: var(--color-recent);
+  background-color: var(--lightblue);
 }
 
 .legend .color-stale {
-  background-color: var(--color-stale);
+  background-color: var(--orange);
 }
 
 .legend .color-old {
-  background-color: var(--color-old);
+  background-color: var(--red);
 }
 
 #icon-container {
@@ -435,7 +488,6 @@ body.dark-mode .editable-title[contenteditable="true"] {
   border: none;
   outline: none;
   font-size: 1.17em;
-  font-weight: bold;
   background-color: transparent;
   width: 100%;
   color: inherit;
@@ -444,6 +496,6 @@ body.dark-mode .editable-title[contenteditable="true"] {
 }
 
 .edit-icon {
-  margin-right: 8px;
+  padding: 8px;
   opacity: 0.9;
 }
