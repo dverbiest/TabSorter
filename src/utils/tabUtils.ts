@@ -3,7 +3,7 @@ import { saveWindowTitle } from './windowUtils';
 
 let lastClosedTab: string;
 let lastAction: 'closedTab' | 'mergedWindows' | null = null;
-let lastMergedWindows: { windowTitle: string, fromWindowId: number, toWindowId: number, tabs: chrome.tabs.Tab[] } | null = null;
+let lastMergedWindows: { oldTitle: string, fromWindowId: number, toWindowId: number, tabs: chrome.tabs.Tab[] } | null = null;
 
 export function restoreLastAction() {
   if (lastAction === 'closedTab' && lastClosedTab) {
@@ -13,7 +13,7 @@ export function restoreLastAction() {
     });
     showToast('Tab restored.');
   } else if (lastAction === 'mergedWindows' && lastMergedWindows) {
-    const { windowTitle, tabs } = lastMergedWindows;
+    const { oldTitle, tabs } = lastMergedWindows;
     chrome.windows.create({ tabId: tabs[0].id }, (newWindow) => {
       const newWindowId = newWindow!.id!;
       if (tabs[0].pinned) chrome.tabs.update(tabs[0].id!, { pinned: true });
@@ -21,7 +21,7 @@ export function restoreLastAction() {
         chrome.tabs.move(tab.id!, { windowId: newWindowId, index: index + 1 });
         if (tab.pinned) chrome.tabs.update(tab.id!, { pinned: true });
       })
-      saveWindowTitle(newWindowId, windowTitle || '');
+      saveWindowTitle(newWindowId, oldTitle || '');
     })
     lastMergedWindows = null;
     lastAction = null;
@@ -39,9 +39,9 @@ export function closeTab(tabId: number) {
   });
 }
 
-export function mergeWindows(windowTitle: string, fromWindowId: number, toWindowId: number) {
+export function mergeWindows(oldTitle: string, fromWindowId: number, toWindowId: number) {
   chrome.tabs.query({ windowId: fromWindowId }, (tabs) => {
-    lastMergedWindows = { windowTitle, fromWindowId, toWindowId, tabs };
+    lastMergedWindows = { oldTitle, fromWindowId, toWindowId, tabs };
     tabs.forEach((tab, index) => {
       chrome.tabs.move(tab.id!, { windowId: toWindowId, index }, () => {
         if (tab.pinned) chrome.tabs.update(tab.id!, { pinned: true });

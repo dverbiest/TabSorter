@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "compromise": "^14.14.2",
-    "sortablejs": "^1.15.3",
+    "html5sortable": "^0.14.0",
     "typescript": "^5.6.3"
   },
   "devDependencies": {
