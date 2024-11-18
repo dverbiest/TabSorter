@@ -25,7 +25,8 @@ export function updateWindowLists() {
           container.appendChild(createWindowDiv(window));
       });
       const footer = createElement('footer');
-      footer.appendChild(createElement('a',{ textContent: '❤︎', href: 'https://buymeacoffee.com/verbiest', target: '_blank' }));
+      footer.appendChild(createElement('a',{ className: 'fa-solid fa-comment-dots', title: 'Feedback', href: 'https://github.com/dverbiest/TabSorter/issues', target: '_blank' }));
+      footer.appendChild(createElement('a',{ className: 'fa-solid fa-heart', title: 'Love it!', href: 'https://buymeacoffee.com/verbiest', target: '_blank' }));
       container.appendChild(footer);
       applyFilters();
       applySearchFilter();
@@ -60,10 +61,10 @@ function createTabListItem(tab: chrome.tabs.Tab, windowId: number): HTMLLIElemen
     }),
     createElement('img', { src: tab.favIconUrl || 'icons/icon128.png' }),
     createElement('span', {}, tab.title || 'Untitled'),
-    createElement('button', { className: 'fas fa-up-right-from-square' }, '',
+    createElement('button', { className: 'fas fa-up-right-from-square', title: 'Pop out' }, '',
       () => tab.id && chrome.windows.create({ tabId: tab.id },
         () => { if (tab.pinned) chrome.tabs.update(tab.id!, { pinned: true }) })),
-    createElement('button', { className: 'fas fa-xmark' }, '',
+    createElement('button', { className: 'fas fa-xmark', title: 'Close tab' }, '',
       () => tab.id && closeTab(tab.id))
   ];
 
@@ -91,7 +92,7 @@ function createWindowDiv(window: chrome.windows.Window): HTMLDivElement {
 
   const editIcon = document.createElement('i');
   editIcon.classList.add('fas', 'fa-pen-to-square', 'edit-icon');
-  editIcon.title = 'Edit title';
+  editIcon.title = 'Edit window';
 
   const titleInput = document.createElement('input');
   titleInput.type = 'text';
@@ -380,7 +381,8 @@ function initializeWindowSortable() {
   if (container) {
     sortable(container, {
       items: '.window',
-      connectWith: '#main',
+      handle: 'h3',
+      acceptFrom: '#main',
       orientation: 'vertical',
       placeholderClass: 'sortable-ghost'
     });

@@ -131,7 +131,6 @@ body.dark-mode #reset-filters {
   border-bottom: 1px solid #ddd;
   padding: 0 8px;
   margin: 8px 0;
-  cursor: grab;
   transition: margin 0.3s ease-out;
 }
 
@@ -492,11 +491,16 @@ body.dark-mode .editable-title[contenteditable="true"] {
 
 footer {
   text-align: center;
-  padding-bottom: 6px;
+  padding-bottom: 8px;
 }
 
 footer a {
-  font-size: 20px;
-  color: var(--red-dark);
+  font-size: 16px;
+  color: #336699;
   text-decoration: none;
+  padding: 3px;
+}
+
+footer a:last-child {
+  color: var(--red-dark);
 }
