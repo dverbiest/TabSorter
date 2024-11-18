@@ -496,11 +496,15 @@ footer {
 
 footer a {
   font-size: 16px;
-  color: #336699;
+  color: #858585;
   text-decoration: none;
   padding: 3px;
 }
 
-footer a:last-child {
+footer a:hover {
+  color: #336699;
+}
+
+footer a:last-child:hover {
   color: var(--red-dark);
 }
