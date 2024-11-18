@@ -1,12 +1,13 @@
-# TabSorter
+# Welcome to TabSorter!
 
-Welcome to TabSorter! This project helps you organize and manage your browser tabs efficiently.
+**Organize and manage your browser tabs efficiently.**
 
 ## Features
 
-- **Organize Tabs**: Group and sort your tabs by category.
-- **Save Sessions**: Save and restore tab sessions easily.
+- **Organize Tabs**: Group and reorder your tabs.
 - **Search Tabs**: Quickly find the tab you're looking for.
+- **Tab age tracker**: Easily see how long ago a tab has been viewed by color coding.
+- **Clean up**: Close tab or windows easily.
 
 ## Installation
 
@@ -32,6 +33,6 @@ Welcome to TabSorter! This project helps you organize and manage your browser ta
   ```sh
   npm watch
   ```
-2. Open your browser and start organizing your tabs!
+2. Open Chrome, install the extention by loading the 'dist' folder as unpacked extention and start organizing your tabs!
 
-Happy sorting!
+Happy sorting! ♥️
