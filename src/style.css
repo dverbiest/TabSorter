@@ -91,8 +91,7 @@ body.dark-mode #search-input:focus {
   font-size: large;
   position: absolute;
   right: 16px;
-  top: 40%;
-  transform: translateY(-50%);
+  top: 10px;
   cursor: pointer;
   display: none;
   color: #aaa;
