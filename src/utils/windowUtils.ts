@@ -364,6 +364,7 @@ function updateResetFiltersVisibility() {
   const filterState = JSON.parse(localStorage.getItem('filterState') || '{}');
   const isFiltering = searchTerm.length > 0 || Object.values(filterState).some(isHidden => isHidden);
   document.getElementById('reset-filters')?.classList.toggle('active', isFiltering);
+  document.querySelectorAll('.window').forEach(windowDiv => windowDiv.classList.toggle('filter', isFiltering))
 }
 
 function initializeCollapseExpandAll() {

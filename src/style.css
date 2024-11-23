@@ -138,14 +138,23 @@ body.dark-mode #reset-filters {
   transition: margin 0.3s ease-out;
 }
 
-.window.hidden {
-  display: none;
-}
-
 body.dark-mode .window {
   background-color: #2e2e2e;
   border-color: #444;
 }
+
+.window.hidden {
+  display: none;
+}
+
+.window.filter {
+  background-color: #e4f0ff;
+}
+
+body.dark-mode .window.filter {
+  background-color: #1f2d38;
+}
+
 
 .sortable-chosen {
   background-color: #f7f7fa !important;
