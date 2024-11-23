@@ -9,32 +9,39 @@ export function updateWindowLists() {
   console.log('Updating lists');
   chrome.windows.getAll({ populate: true }, (windows) => {
     const main = document.getElementById('main');
-    if (main) {
-      // Remove all event listeners and reinitialize the main container
-      const container = main.cloneNode(true) as HTMLElement;
-      main.replaceWith(container);
-      initializeThemeToggle();
-      initializeLegendFilters();
-      initializeSearchFilter();
-      initializeCollapseExpandAll();
-      container.querySelectorAll('.window').forEach(window => window.remove());
-      container.querySelector('footer')?.remove();
-      const sortedWindows = sortWindowsByStoredOrder(windows);
-      sortedWindows.forEach((window) => {
-        if (!window.type || window.type !== 'popup') // Skip extension windows
-          container.appendChild(createWindowDiv(window));
-      });
-      const footer = createElement('footer');
-      footer.appendChild(createElement('a',{ className: 'fa-solid fa-comment-dots', title: 'Feedback', href: 'https://github.com/dverbiest/TabSorter/issues', target: '_blank' }));
-      footer.appendChild(createElement('a',{ className: 'fa-solid fa-heart', title: 'Love it!', href: 'https://buymeacoffee.com/verbiest', target: '_blank' }));
-      container.appendChild(footer);
-      applyFilters();
-      applySearchFilter();
-      if (!(document.getElementById('search-input') as HTMLInputElement).value)
-        applyCollapseState();
-      initializeWindowSortable();
-    }
+    // Remove all event listeners and reinitialize the main container
+    const container = main!.cloneNode(true) as HTMLElement;
+    main!.replaceWith(container);
+    initializeThemeToggle();
+    initializeLegendFilters();
+    initializeSearchFilter();
+    initializeCollapseExpandAll();
+    container.querySelectorAll('.window').forEach(window => window.remove());
+    container.querySelector('footer')?.remove();
+    const sortedWindows = sortWindowsByStoredOrder(windows);
+    sortedWindows.forEach((window) => {
+      if (!window.type || window.type !== 'popup') // Skip extension windows
+        container.appendChild(createWindowDiv(window));
+    });
+    const footer = createElement('footer');
+    footer.appendChild(createElement('a',{ className: 'fa-solid fa-comment-dots', title: 'Feedback', href: 'https://github.com/dverbiest/TabSorter/issues', target: '_blank' }));
+    footer.appendChild(createElement('a',{ className: 'fa-solid fa-heart', title: 'Love it!', href: 'https://buymeacoffee.com/verbiest', target: '_blank' }));
+    container.appendChild(footer);
+    applyFilters();
+    applySearchFilter();
+    if (!(document.getElementById('search-input') as HTMLInputElement).value)
+      applyCollapseState();
+    initializeWindowSortable();
+    updateMainContainerHeight(container);
   });
+}
+
+function updateMainContainerHeight(container: HTMLElement) {
+  const bodyHeight = document.body.clientHeight;
+  let height = bodyHeight / 2;
+  document.querySelectorAll('.window').forEach(windowDiv =>
+    height += windowDiv.clientHeight + 8);
+  container.style.minHeight = Math.max(height, bodyHeight) + 'px';
 }
 
 function generateSmartTitle(tabs: chrome.tabs.Tab[]): string {
@@ -186,8 +193,10 @@ function createWindowDiv(window: chrome.windows.Window): HTMLDivElement {
   });
 
   windowTitle.addEventListener('click', () => {
-    tabList.classList.toggle('collapsed');
     windowTitle.classList.toggle('collapsed');
+    tabList.classList.toggle('collapsed');
+    const main = document.getElementById('main') as HTMLElement;
+    updateMainContainerHeight(main);
     saveCollapseState(window.id!, tabList.classList.contains('collapsed'));
   });
 
@@ -374,6 +383,8 @@ function toggleCollapseExpandAll(collapse: boolean, searching = false) {
     if (!searching)
       saveCollapseState(parseInt((windowDiv as HTMLElement).dataset.windowId || '', 10), collapse);
   });
+  const main = document.getElementById('main') as HTMLElement;
+  updateMainContainerHeight(main);
 }
 
 function initializeWindowSortable() {
@@ -450,3 +461,7 @@ function sortWindowsByStoredOrder(windows: chrome.windows.Window[]): chrome.wind
   const remainingWindows = windows.filter(window => !windowOrder.includes(window.id!));
   return [...sortedWindows, ...remainingWindows];
 }
+
+// function getTabGroups(windowId: number): chrome.tabGroups.TabGroup[] {
+//   return chrome.tabGroups.query({ windowId });
+// }

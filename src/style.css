@@ -10,7 +10,7 @@
   --red-dark: rgb(209 33 33 / 75%);
 }
 
-html, body, #main {
+html, body {
   height: 100%;
 }
 
@@ -24,6 +24,11 @@ body {
 body.dark-mode {
   color: #ccc;
   background-color: #1e1e1e;
+}
+
+#main {
+  transition: min-height 0.3s ease-out;
+  background-color: inherit;
 }
 
 #settings-container {
@@ -359,7 +364,7 @@ body.dark-mode .tab-list li button:last-of-type:hover {
 .sortable-ghost {
   min-width: 170px; /* Prevents the ghost from shrinking too small inside merge target */
   height: 48px;
-  border: 2px dashed #013d79;
+  border: 2px dashed #00459a;
   opacity: 0.8;
 }
 
@@ -491,7 +496,11 @@ body.dark-mode .editable-title[contenteditable="true"] {
 
 footer {
   text-align: center;
-  padding-bottom: 8px;
+  padding: 8px;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background-color: inherit;
 }
 
 footer a {
