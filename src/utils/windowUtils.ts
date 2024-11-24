@@ -46,11 +46,11 @@ function updateMainContainerHeight(container: HTMLElement) {
 
 function generateSmartTitle(tabs: chrome.tabs.Tab[]): string {
   const activeTab = tabs.find(tab => tab.active && tab.title && tab.title.trim() !== '');
-  const defaultTitle = activeTab?.title || 'Untitled';
+  const defaultTitle = activeTab?.title || '';
   const titles = tabs.map(tab => tab.title?.trim()).filter(title => title);
   titles.push(defaultTitle);
   const keywords = nlp(titles.join(' ')).topics().out('array');
-  return keywords.length ? keywords[0] + '?' : defaultTitle;
+  return keywords.length ? `"${keywords[0]}"` : defaultTitle;
 }
 
 function createTabListItem(tab: chrome.tabs.Tab, windowId: number): HTMLLIElement {
@@ -106,10 +106,6 @@ function createWindowDiv(window: chrome.windows.Window): HTMLDivElement {
   titleInput.value = getStoredWindowTitle(window.id!) || generateSmartTitle(window.tabs || []);
   titleInput.classList.add('editable-title-input');
   titleInput.setAttribute('readonly', 'true');
-  titleInput.addEventListener('click', (event) => {
-    if (!titleInput.hasAttribute('readonly'))
-      event.stopPropagation();
-  });
   function enableTitleEditing() {
     titleInput.removeAttribute('readonly');
     titleInput.style.cursor = 'text';
@@ -128,6 +124,20 @@ function createWindowDiv(window: chrome.windows.Window): HTMLDivElement {
       titleInput.value = generateSmartTitle(window.tabs || []);
     saveWindowTitle(window.id!, titleInput.value);
   }
+  titleInput.addEventListener('click', (event) => {
+    if (!titleInput.hasAttribute('readonly'))
+      event.stopPropagation();
+  });
+  titleInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      const inputs = Array.from(document.querySelectorAll('.editable-title-input'));
+      const nextIndex = inputs.indexOf(titleInput) + (event.shiftKey ? -1 : 1) + inputs.length;
+      const nextInput = inputs[nextIndex % inputs.length] as HTMLElement;
+      nextInput.focus();
+    }
+    if (event.key === 'Escape')
+      updateWindowLists();
+  });
   titleInput.addEventListener('focus', enableTitleEditing);
   titleInput.addEventListener('blur', saveAndCloseTitleEdit);
   editIcon.addEventListener('click', (event) => {
@@ -135,8 +145,7 @@ function createWindowDiv(window: chrome.windows.Window): HTMLDivElement {
     if (!windowDiv.classList.contains('options')) {
       enableTitleEditing();
       windowDiv.classList.add('options');
-    }
-    else {
+    } else {
       saveAndCloseTitleEdit();
       windowDiv.classList.remove('options');
     }
@@ -206,10 +215,6 @@ function createWindowDiv(window: chrome.windows.Window): HTMLDivElement {
     orientation: 'vertical',
     forcePlaceholderSize: true
   });
-  // tabList.addEventListener('sortstart', (e: Event) => {
-  //   const evt = (e as CustomEvent).detail;
-  //   console.log('Tab sorting started:', evt);
-  // }, { once: true });
   tabList.addEventListener('sortstop', (e: Event) => {
     const evt = (e as CustomEvent).detail;
 
