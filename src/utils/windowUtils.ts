@@ -61,7 +61,6 @@ function createTabListItem(tab: chrome.tabs.Tab, windowId: number): HTMLLIElemen
   listItem.dataset.tabId = tab.id?.toString() || '';
   if (lastViewedClass) listItem.classList.add(lastViewedClass);
 
-  const div = document.createElement('div');
   const elements = [
     createElement('button', { className: `fas fa-thumbtack ${tab.pinned ? 'pinned' : ''}`, title: 'Pin tab' }, '', () => {
       if (tab.id !== undefined) chrome.tabs.update(tab.id, { pinned: !tab.pinned }, updateWindowLists);
@@ -75,9 +74,15 @@ function createTabListItem(tab: chrome.tabs.Tab, windowId: number): HTMLLIElemen
       () => tab.id && closeTab(tab.id))
   ];
 
-  elements.forEach(element => div.appendChild(element));
-  listItem.appendChild(div);
-  listItem.appendChild(document.createElement('ul'));
+  elements.forEach(element => listItem.appendChild(element));
+  // const subList = listItem.appendChild(document.createElement('ul'));
+
+  // sortable(subList, {
+  //   items: 'li',
+  //   acceptFrom: '.tab-list',
+  //   orientation: 'vertical',
+  //   forcePlaceholderSize: true
+  // });
 
   listItem.addEventListener('click', (event) => {
     if (tab.id && windowId && (event.target as HTMLElement).localName !== 'button') {
@@ -105,9 +110,7 @@ function createWindowDiv(window: chrome.windows.Window): HTMLDivElement {
   titleInput.type = 'text';
   titleInput.value = getStoredWindowTitle(window.id!) || generateSmartTitle(window.tabs || []);
   titleInput.classList.add('editable-title-input');
-  titleInput.setAttribute('readonly', 'true');
   function enableTitleEditing() {
-    titleInput.removeAttribute('readonly');
     titleInput.style.cursor = 'text';
     titleInput.style.pointerEvents = 'auto';
     titleInput.select();
@@ -117,7 +120,7 @@ function createWindowDiv(window: chrome.windows.Window): HTMLDivElement {
     windowDiv.classList.add('options');
   }
   function saveAndCloseTitleEdit() {
-    titleInput.setAttribute('readonly', 'true');
+    titleInput.setSelectionRange(0, 0);
     titleInput.style.cursor = 'pointer';
     titleInput.style.pointerEvents = 'none';
     if (titleInput.value.trim() === '')
@@ -125,7 +128,7 @@ function createWindowDiv(window: chrome.windows.Window): HTMLDivElement {
     saveWindowTitle(window.id!, titleInput.value);
   }
   titleInput.addEventListener('click', (event) => {
-    if (!titleInput.hasAttribute('readonly'))
+    if (titleInput.style.pointerEvents === 'auto')
       event.stopPropagation();
   });
   titleInput.addEventListener('keydown', (event) => {
@@ -213,8 +216,40 @@ function createWindowDiv(window: chrome.windows.Window): HTMLDivElement {
     items: 'li',
     acceptFrom: '.tab-list',
     orientation: 'vertical',
-    forcePlaceholderSize: true
+    placeholderClass: 'tab-ghost'
   });
+  tabList.addEventListener('sortstart', (e: Event) => {
+    const item = (e as CustomEvent).detail.item;
+    const tabListItems = document.querySelectorAll('.tab-list li');
+    const buttons = document.querySelectorAll('li button');
+    buttons.forEach(button => button.classList.add('hide'));
+
+    tabListItems.forEach(tabListItem => {
+      if (tabListItem !== item) { // Don't allow self-merging
+        // const mergeTarget = document.createElement('div');
+        // mergeTarget.classList.add('merge-target');
+        // mergeTarget.textContent = 'Group';
+        // tabListItem.insertBefore(mergeTarget, tabListItem.firstChild);
+    //     sortable(mergeTarget, {
+    //       acceptFrom: '#main',
+    //       orientation: 'vertical',
+    //       placeholderClass: 'tab-ghost'
+    //     });
+    //     mergeTarget.addEventListener('sortstop', (e: Event) => {
+    //       const evt = (e as CustomEvent).detail;
+    //       const fromElement = evt.item as HTMLElement;
+    //       const currentTarget = (evt.item as HTMLElement).closest('.merge-target') as HTMLElement;
+    //       const toElement = currentTarget.closest('.window') as HTMLElement;
+    //       const oldTitle = (fromElement.querySelector('.editable-title-input') as HTMLInputElement).value;
+    //       const fromWindowId = parseInt(fromElement.dataset.windowId || '', 10);
+    //       const toWindowId = parseInt(toElement.dataset.windowId || '', 10);
+    //       mergeWindows(oldTitle, fromWindowId, toWindowId);
+    //       saveWindowOrder();
+    //       updateWindowLists();
+    //     }, { once: true });
+      }
+    });
+  }, { once: true });
   tabList.addEventListener('sortstop', (e: Event) => {
     const evt = (e as CustomEvent).detail;
 
@@ -230,7 +265,8 @@ function createWindowDiv(window: chrome.windows.Window): HTMLDivElement {
           chrome.tabs.update(tabId, { pinned: true }, () =>
             chrome.tabs.move(tabId, { index: newIndex! }));
       });
-      updateWindowLists();
+    } else {
+      updateWindowLists(); // to remove merge-targets and  reset list items button visibility
     }
   }, { once: true });
 
@@ -401,7 +437,7 @@ function initializeWindowSortable() {
       handle: 'h3',
       acceptFrom: '#main',
       orientation: 'vertical',
-      placeholderClass: 'sortable-ghost'
+      placeholderClass: 'window-ghost'
     });
 
     container.addEventListener('sortstart', (e: Event) => {
@@ -425,7 +461,7 @@ function initializeWindowSortable() {
           sortable(mergeTarget, {
             acceptFrom: '#main',
             orientation: 'vertical',
-            placeholderClass: 'sortable-ghost'
+            placeholderClass: 'window-ghost'
           });
           mergeTarget.addEventListener('sortstop', (e: Event) => {
             const evt = (e as CustomEvent).detail;
