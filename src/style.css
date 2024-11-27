@@ -23,7 +23,7 @@ body {
 
 body.dark-mode {
   color: #ccc;
-  background-color: #1e1e1e;
+  background-color: #202124;
 }
 
 #main {
@@ -59,7 +59,7 @@ body.dark-mode #theme-toggle {
 }
 
 body.dark-mode #search-container {
-  background-color: #1e1e1e;
+  background-color: #202124;
 }
 
 #search-input {
@@ -78,7 +78,7 @@ body.dark-mode #search-container {
 }
 
 body.dark-mode #search-input {
-  background-color: #333;
+  background-color: #28292c;
   color: #ccc;
   border-color: #444;
 }
@@ -139,7 +139,7 @@ body.dark-mode #reset-filters {
 }
 
 body.dark-mode .window {
-  background-color: #2e2e2e;
+  background-color: #28292c;
   border-color: #444;
 }
 
@@ -225,7 +225,7 @@ body.dark-mode .sortable-chosen {
 
 body.dark-mode .window-options button {
   border-bottom: 1px solid #333;
-  color: #1e1e1e;
+  color: #202124;
 }
 
 .window-options button:hover {
@@ -252,13 +252,13 @@ body.dark-mode .window-options button {
 .tab-list li {
   display: flex;
   align-items: center;
+  flex-direction: row;
   margin-top: 4px;
   padding: 8px 4px;
   border: 1px solid #ddd;
   border-radius: 4px;
   cursor: grab;
   min-height: 20px;
-  align-content: center;
 }
 
 .tab-list li.recent {
@@ -523,4 +523,21 @@ footer a:hover {
 
 footer a:last-child:hover {
   color: var(--red-dark);
+}
+
+.group-title {
+  font-weight: bold;
+  margin-left: 6px;
+  display: block;
+}
+
+.group-tab-list {
+  list-style-type: none;
+  padding-left: 16px;
+}
+
+li.tab-group {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
 }

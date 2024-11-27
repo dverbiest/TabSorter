@@ -59,6 +59,7 @@ function createTabListItem(tab: chrome.tabs.Tab, windowId: number): HTMLLIElemen
 
   const listItem = document.createElement('li');
   listItem.dataset.tabId = tab.id?.toString() || '';
+  listItem.dataset.index = tab.index?.toString() || '';
   if (lastViewedClass) listItem.classList.add(lastViewedClass);
 
   const elements = [
@@ -75,14 +76,6 @@ function createTabListItem(tab: chrome.tabs.Tab, windowId: number): HTMLLIElemen
   ];
 
   elements.forEach(element => listItem.appendChild(element));
-  // const subList = listItem.appendChild(document.createElement('ul'));
-
-  // sortable(subList, {
-  //   items: 'li',
-  //   acceptFrom: '.tab-list',
-  //   orientation: 'vertical',
-  //   forcePlaceholderSize: true
-  // });
 
   listItem.addEventListener('click', (event) => {
     if (tab.id && windowId && (event.target as HTMLElement).localName !== 'button') {
@@ -90,6 +83,30 @@ function createTabListItem(tab: chrome.tabs.Tab, windowId: number): HTMLLIElemen
       chrome.windows.update(windowId, { focused: true });
     }
   });
+
+  return listItem;
+}
+
+function createTabGroupListItem(group: chrome.tabGroups.TabGroup, tabs: chrome.tabs.Tab[]): HTMLLIElement {
+  const listItem = document.createElement('li');
+  listItem.classList.add('tab-group');
+  listItem.dataset.index = tabs[0].index?.toString() || '';
+  listItem.style.borderLeft = `4px solid ${group.color}`;
+  
+  const groupTitle = document.createElement('span');
+  groupTitle.textContent = group.title || '...';
+  groupTitle.classList.add('group-title');
+  listItem.appendChild(groupTitle);
+
+  const tabList = document.createElement('ul');
+  tabList.classList.add('group-tab-list');
+  tabList.dataset.groupId = group.id?.toString() || '';
+  tabs.forEach(tab => {
+    const tabListItem = createTabListItem(tab, tab.windowId!);
+    tabListItem.dataset.index = tab.index?.toString() || '';
+    tabList.appendChild(tabListItem);
+  });
+  listItem.appendChild(tabList);
 
   return listItem;
 }
@@ -199,9 +216,55 @@ function createWindowDiv(window: chrome.windows.Window): HTMLDivElement {
   tabList.classList.add('tab-list');
   windowDiv.appendChild(tabList);
 
+  const tabGroups = new Map<number, chrome.tabs.Tab[]>();
+  const tabElements: { index: number, element: HTMLElement }[] = [];
+
   window.tabs?.forEach((tab) => {
-    const listItem = createTabListItem(tab, window.id!);
-    tabList.appendChild(listItem);
+    if (tab.groupId && tab.groupId !== chrome.tabGroups.TAB_GROUP_ID_NONE) {
+      if (!tabGroups.has(tab.groupId)) {
+        tabGroups.set(tab.groupId, []);
+      }
+      tabGroups.get(tab.groupId)!.push(tab);
+    } else {
+      const listItem = createTabListItem(tab, window.id!);
+      tabElements.push({ index: tab.index, element: listItem });
+    }
+  });
+
+  const groupPromises = Array.from(tabGroups.entries()).map(([groupId, tabs]) => {
+    return new Promise<void>((resolve) => {
+      chrome.tabGroups.get(groupId, (group) => {
+        const groupListItem = createTabGroupListItem(group, tabs);
+        const firstTabIndex = tabs[0].index;
+        tabElements.push({ index: firstTabIndex, element: groupListItem });
+        resolve();
+      });
+    });
+  });
+
+  Promise.all(groupPromises).then(() => {
+    tabElements.sort((a, b) => a.index - b.index);
+    tabElements.forEach(item => tabList.appendChild(item.element));
+    updateWindowVisibility();
+    sortable(tabList, {
+      items: 'li',
+      acceptFrom: '.tab-list, .group-tab-list',
+      orientation: 'vertical',
+      placeholderClass: 'tab-ghost'
+    });
+    tabList.addEventListener('sortstart', (e: Event) => sortStart(e), { once: true });
+    tabList.addEventListener('sortstop', (e: Event) => sortStop(e, null), { once: true });
+    const groupTapLists = Array.from(tabList.querySelectorAll('.group-tab-list'));
+    sortable(groupTapLists, {
+      items: 'li',
+      acceptFrom: '.tab-list, .group-tab-list',
+      orientation: 'vertical',
+      placeholderClass: 'tab-ghost'
+    });
+    groupTapLists.forEach(groupTapList => {
+      groupTapList.addEventListener('sortstart', (e: Event) => sortStart(e), { once: true });
+      groupTapList.addEventListener('sortstop', (e: Event) => sortStop(e, groupTapList), { once: true });
+    });
   });
 
   windowTitle.addEventListener('click', () => {
@@ -211,66 +274,85 @@ function createWindowDiv(window: chrome.windows.Window): HTMLDivElement {
     updateMainContainerHeight(main);
     saveCollapseState(window.id!, tabList.classList.contains('collapsed'));
   });
+  
+  return windowDiv;
 
-  sortable(tabList, {
-    items: 'li',
-    acceptFrom: '.tab-list',
-    orientation: 'vertical',
-    placeholderClass: 'tab-ghost'
-  });
-  tabList.addEventListener('sortstart', (e: Event) => {
+  function sortStart(e: Event) {
     const item = (e as CustomEvent).detail.item;
-    const tabListItems = document.querySelectorAll('.tab-list li');
     const buttons = document.querySelectorAll('li button');
     buttons.forEach(button => button.classList.add('hide'));
-
-    tabListItems.forEach(tabListItem => {
-      if (tabListItem !== item) { // Don't allow self-merging
+    console.log('Sort start', item.classList);
+    if (item.classList.contains('tab-group'))
+      sortable('.group-tab-list', 'disable');
+    
+    // const tabListItems = document.querySelectorAll('.tab-list li');
+    // tabListItems.forEach(tabListItem => {
+      // if (tabListItem !== item) { // Don't allow self-merging
         // const mergeTarget = document.createElement('div');
         // mergeTarget.classList.add('merge-target');
         // mergeTarget.textContent = 'Group';
         // tabListItem.insertBefore(mergeTarget, tabListItem.firstChild);
-    //     sortable(mergeTarget, {
-    //       acceptFrom: '#main',
-    //       orientation: 'vertical',
-    //       placeholderClass: 'tab-ghost'
-    //     });
-    //     mergeTarget.addEventListener('sortstop', (e: Event) => {
-    //       const evt = (e as CustomEvent).detail;
-    //       const fromElement = evt.item as HTMLElement;
-    //       const currentTarget = (evt.item as HTMLElement).closest('.merge-target') as HTMLElement;
-    //       const toElement = currentTarget.closest('.window') as HTMLElement;
-    //       const oldTitle = (fromElement.querySelector('.editable-title-input') as HTMLInputElement).value;
-    //       const fromWindowId = parseInt(fromElement.dataset.windowId || '', 10);
-    //       const toWindowId = parseInt(toElement.dataset.windowId || '', 10);
-    //       mergeWindows(oldTitle, fromWindowId, toWindowId);
-    //       saveWindowOrder();
-    //       updateWindowLists();
-    //     }, { once: true });
-      }
-    });
-  }, { once: true });
-  tabList.addEventListener('sortstop', (e: Event) => {
-    const evt = (e as CustomEvent).detail;
+        //     sortable(mergeTarget, {
+        //       acceptFrom: '#main',
+        //       orientation: 'vertical',
+        //       placeholderClass: 'tab-ghost'
+        //     });
+        //     mergeTarget.addEventListener('sortstop', (e: Event) => {
+        //       const evt = (e as CustomEvent).detail;
+        //       const fromElement = evt.item as HTMLElement;
+        //       const currentTarget = (evt.item as HTMLElement).closest('.merge-target') as HTMLElement;
+        //       const toElement = currentTarget.closest('.window') as HTMLElement;
+        //       const oldTitle = (fromElement.querySelector('.editable-title-input') as HTMLInputElement).value;
+        //       const fromWindowId = parseInt(fromElement.dataset.windowId || '');
+        //       const toWindowId = parseInt(toElement.dataset.windowId || '');
+        //       mergeWindows(oldTitle, fromWindowId, toWindowId);
+        //       saveWindowOrder();
+        //       updateWindowLists();
+        //     }, { once: true });
+    //   }
+    // });
+  }
 
-    const newIndex = Array.from(evt.item.parentNode.children).indexOf(evt.item);
-    const oldWindowId = parseInt(((evt.origin.container as HTMLElement).closest('.window') as HTMLElement)?.dataset.windowId || '', 10);
-    const newWindowId = parseInt(((evt.item as HTMLElement).closest('.window') as HTMLElement)?.dataset.windowId || '', 10);
-    if (evt.origin.index !== newIndex || oldWindowId !== newWindowId) {
-      const movedItem = evt.item as HTMLElement;
-      const tabId = parseInt(movedItem.dataset.tabId || '', 10);
+  function sortStop(e: Event, groupTabList: Element | null) {
+    console.log('groupTabList', groupTabList);
+
+    const evt = (e as CustomEvent).detail;
+    const movedItem = evt.item as HTMLElement;
+    const tabId = parseInt(movedItem.dataset.tabId || '');
+    const tabList = movedItem.closest('.tab-list');
+    const listItems = tabList?.querySelectorAll('li:not(.tab-group:not(.sortable-dragging))');
+    const newIndex = listItems ? Array.from(listItems).indexOf(movedItem) : -1;
+    const oldIndex = parseInt(movedItem.dataset.index || '');
+    const oldWindowId = parseInt(((evt.origin.container as HTMLElement).closest('.window') as HTMLElement)?.dataset.windowId || '');
+    const newWindowId = parseInt((movedItem.closest('.window') as HTMLElement)?.dataset.windowId || '');
+    const newGroupId = parseInt((movedItem.closest('.group-tab-list') as HTMLElement)?.dataset.groupId || '');
+    const oldGroupTabList = evt.origin.container.classList.contains('group-tab-list')? evt.origin.container : null;
+    const groupMove = movedItem.classList.contains('tab-group')
+    if (!groupMove && (oldIndex !== newIndex || oldWindowId !== newWindowId || oldGroupTabList !== groupTabList)) {
+      console.log('Tab moved', evt.item, oldIndex, newIndex, oldWindowId, newWindowId, newGroupId);
       const isPinned = movedItem.querySelector('.fa-thumbtack')?.classList.contains('pinned');
       chrome.tabs.move(tabId, { windowId: newWindowId, index: newIndex }, () => {
+        if (newGroupId)
+          chrome.tabs.group({ groupId: newGroupId, tabIds: [tabId] });
+        else
+          chrome.tabs.ungroup([tabId]);
         if (isPinned)
-          chrome.tabs.update(tabId, { pinned: true }, () =>
-            chrome.tabs.move(tabId, { index: newIndex! }));
+          chrome.tabs.update(tabId, { pinned: true }, () => chrome.tabs.move(tabId, { index: newIndex! }));
       });
+    } else if (groupMove && newIndex > -1 && (oldIndex !== newIndex || oldWindowId !== newWindowId)) {
+      console.log('Group moved', movedItem, oldIndex, newIndex, oldWindowId, newWindowId);
+      const groupId = parseInt((movedItem.querySelector('.group-tab-list') as HTMLElement)?.dataset.groupId || '');
+      console.log('Group moved', groupId, newIndex, newWindowId);
+      if (newWindowId !== oldWindowId)
+        chrome.tabGroups.move(groupId, { index: newIndex, windowId: newWindowId });
+      else
+        chrome.tabGroups.move(groupId, { index: newIndex });
+      sortable('.group-tab-list', 'enable');
     } else {
-      updateWindowLists(); // to remove merge-targets and  reset list items button visibility
+      console.log('Tab dropped back in same place');
+      updateWindowLists();
     }
-  }, { once: true });
-
-  return windowDiv;
+  }
 }
 
 export function saveWindowTitle(windowId: number, title: string) {
@@ -324,6 +406,7 @@ function updateWindowVisibility() {
     const visibleItems = Array.from(windowDiv.querySelectorAll('.tab-list li')).filter(item => !item.classList.contains('hidden'));
     windowDiv.classList.toggle('hidden', visibleItems.length === 0);
   });
+  updateMainContainerHeight(document.getElementById('main') as HTMLElement);
 }
 
 function saveFilterState() {
@@ -423,7 +506,7 @@ function toggleCollapseExpandAll(collapse: boolean, searching = false) {
     tabList?.classList.toggle('collapsed', collapse);
     windowTitle?.classList.toggle('collapsed', collapse);
     if (!searching)
-      saveCollapseState(parseInt((windowDiv as HTMLElement).dataset.windowId || '', 10), collapse);
+      saveCollapseState(parseInt((windowDiv as HTMLElement).dataset.windowId || ''), collapse);
   });
   const main = document.getElementById('main') as HTMLElement;
   updateMainContainerHeight(main);
@@ -469,8 +552,8 @@ function initializeWindowSortable() {
             const currentTarget = (evt.item as HTMLElement).closest('.merge-target') as HTMLElement;
             const toElement = currentTarget.closest('.window') as HTMLElement;
             const oldTitle = (fromElement.querySelector('.editable-title-input') as HTMLInputElement).value;
-            const fromWindowId = parseInt(fromElement.dataset.windowId || '', 10);
-            const toWindowId = parseInt(toElement.dataset.windowId || '', 10);
+            const fromWindowId = parseInt(fromElement.dataset.windowId || '');
+            const toWindowId = parseInt(toElement.dataset.windowId || '');
             mergeWindows(oldTitle, fromWindowId, toWindowId);
             saveWindowOrder();
             updateWindowLists();
@@ -503,7 +586,3 @@ function sortWindowsByStoredOrder(windows: chrome.windows.Window[]): chrome.wind
   const remainingWindows = windows.filter(window => !windowOrder.includes(window.id!));
   return [...sortedWindows, ...remainingWindows];
 }
-
-// function getTabGroups(windowId: number): chrome.tabGroups.TabGroup[] {
-//   return chrome.tabGroups.query({ windowId });
-// }
