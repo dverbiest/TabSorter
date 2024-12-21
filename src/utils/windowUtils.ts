@@ -280,7 +280,9 @@ function createWindowDiv(window: chrome.windows.Window): HTMLDivElement {
   function sortStart(e: Event) {
     const item = (e as CustomEvent).detail.item;
     const buttons = document.querySelectorAll('li button');
+    const footer = document.querySelector('footer') as HTMLElement;
     buttons.forEach(button => button.classList.add('hide'));
+    footer.classList.add('hide');
     console.log('Sort start', item.classList);
     if (item.classList.contains('tab-group'))
       sortable('.group-tab-list', 'disable');
@@ -529,11 +531,13 @@ function initializeWindowSortable() {
       const listElement = item.querySelector('.tab-list') as HTMLElement;
       const windowTitles = document.querySelectorAll('.window-title');
       const icons = document.querySelectorAll('.window-title .fas');
+      const footer = document.querySelector('footer') as HTMLElement;
 
       item.classList.remove('options');
       headerElement.classList.add('collapsed');
       listElement.classList.add('collapsed');
       icons.forEach(icon => icon.classList.add('hide'));
+      footer.classList.add('hide');
 
       windowTitles.forEach(title => {
         if (title.closest('.window') !== item) { // Don't allow self-merging

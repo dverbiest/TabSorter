@@ -154,6 +154,11 @@ body.dark-mode .window {
 button.hide {
   visibility: hidden;
 }
+
+footer.hide {
+  bottom: -40px;
+}
+
 .window.filter {
   background-color: #e4f0ff;
 }
@@ -508,6 +513,7 @@ footer {
   bottom: 0;
   width: 100%;
   background-color: inherit;
+  transition: bottom 0.3s ease-out;
 }
 
 footer a {
